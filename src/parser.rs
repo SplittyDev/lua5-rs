@@ -6,6 +6,9 @@
 mod ast {
     //! The abstract syntax tree.
 
+    /// Container type for holding statements.
+    pub struct Container(Vec<Stmt>);
+
     /// A statement.
     pub enum Stmt {
         Expr(Expr),
@@ -19,6 +22,7 @@ mod ast {
     pub struct Name(String);
 }
 
+use lexer::Lexeme;
 use parser::ast::*;
 
 /// AstVisitor trait.
@@ -28,7 +32,10 @@ trait AstVisitor {
     fn visit_name(&mut self, val: &Name);
 }
 
-struct Parser;
+/// Semantic analyser.
+pub struct Parser {
+    tokens: Box<Vec<Lexeme>>,
+}
 
 #[allow(unused_variables)]
 impl AstVisitor for Parser {
@@ -37,8 +44,14 @@ impl AstVisitor for Parser {
     }
 }
 
+/// Implements `Parser`.
 impl Parser {
-    pub fn parse() -> Stmt {
+    /// Construct a new `Parser`.
+    pub fn new(tokens: Vec<Lexeme>) -> Parser {
+        Parser { tokens: Box::new(tokens) }
+    }
+    /// Analyse a set of lexical tokens.
+    pub fn parse() -> Container {
         unimplemented!()
     }
 }

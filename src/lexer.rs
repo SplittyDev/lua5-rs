@@ -9,6 +9,9 @@ use std::str::Chars;
 use std::iter::Peekable;
 use token::Token;
 
+/// A lexical token with positional information.
+pub struct Lexeme(pub Token, pub TokenPosition);
+
 /// Positional information for lexical tokens.
 #[derive(Debug, Clone, Copy)]
 pub struct TokenPosition {
@@ -18,14 +21,10 @@ pub struct TokenPosition {
     pos: u32,
 }
 
-/// Implements `TokenPosition`.
-impl TokenPosition {
-    /// Constructs a new `TokenPosition`.
-    fn new(line: u32, pos: u32) -> TokenPosition {
-        TokenPosition {
-            line: line,
-            pos: pos,
-        }
+/// Implements `Default` for `TokenPosition`.
+impl Default for TokenPosition {
+    fn default() -> TokenPosition {
+        TokenPosition { line: 1, pos: 0 }
     }
 }
 
@@ -41,10 +40,8 @@ impl fmt::Display for TokenPosition {
 pub struct Lexer<'a> {
     /// The peekable buffer.
     buf: Peekable<Chars<'a>>,
-    /// The current line.
-    line: u32,
-    /// The position on the current line.
-    line_pos: u32,
+    /// The current position.
+    pos: TokenPosition,
 }
 
 /// Implements `Lexer`.
@@ -53,18 +50,17 @@ impl<'a> Lexer<'a> {
     pub fn new(src: &'a String) -> Lexer<'a> {
         Lexer {
             buf: src.chars().peekable().to_owned(),
-            line: 1,
-            line_pos: 0,
+            pos: TokenPosition::default(),
         }
     }
 }
 
 /// Implements `Iterator` for `Lexer`.
 impl<'a> Iterator for Lexer<'a> {
-    type Item = (Token, TokenPosition);
+    type Item = Lexeme;
 
     /// Reads the next `Item`.
-    fn next(&mut self) -> Option<(Token, TokenPosition)> {
+    fn next(&mut self) -> Option<Lexeme> {
 
         // The current position.
         let now: TokenPosition;
@@ -74,8 +70,8 @@ impl<'a> Iterator for Lexer<'a> {
 
         /// Logs a message.
         macro_rules! log {
-            (INFO $msg:expr) => (println!(format!("[{}:{}] {}", self.line, self.line_pos, String::from($msg))));
-            (ERR $msg:expr) => (panic!(format!("[{}:{}] {}", self.line, self.line_pos, String::from($msg))));
+            (INFO $msg:expr) => (println!(format!("{:?} {}", self.pos, String::from($msg))));
+            (ERR $msg:expr) => (panic!(format!("{:?} {}", self.pos, String::from($msg))));
         }
 
         /// Peeks at a character in the stream.
@@ -123,10 +119,10 @@ impl<'a> Iterator for Lexer<'a> {
                         let chr = chr.unwrap();
                         match chr {
                             '\n' => {
-                                self.line += 1;
-                                self.line_pos = 0;
+                                self.pos.line += 1;
+                                self.pos.pos = 0;
                             }
-                            _ => self.line_pos += 1,
+                            _ => self.pos.pos += 1,
                         };
                         self.buf.next();
                     }
@@ -142,7 +138,7 @@ impl<'a> Iterator for Lexer<'a> {
                         skip!(1);
                         ($tk as Token)
                     }
-                    Some(other) => log!(ERR format!("Unimplemented operator: '{}'", other)),
+                    Some(other) => log!(ERR format!("Unimplemented operator: `{}`", other)),
                     None => log!(ERR "Unexpected end of stream."),
                 }
             };
@@ -187,9 +183,9 @@ impl<'a> Iterator for Lexer<'a> {
         /// Creates a (Token, TokenPosition) tuple.
         macro_rules! emit {
             ($token:expr)
-            => (Some(($token as Token, now)));
+            => (Some(Lexeme($token as Token, now)));
             ($token:expr, $pos:expr)
-            => (Some(($token as Token, $pos as TokenPosition)));
+            => (Some(Lexeme($token as Token, $pos as TokenPosition)));
         }
 
         /// Creates a (Token, TokenPosition) tuple using scan_op and emit.
@@ -204,7 +200,7 @@ impl<'a> Iterator for Lexer<'a> {
         skip_whitespace!();
 
         // Update the current position.
-        now = TokenPosition::new(self.line, self.line_pos);
+        now = self.pos;
 
         // The actual lexical analysis is done here.
         if let Some(chr) = peek!() {
@@ -284,7 +280,7 @@ impl<'a> Iterator for Lexer<'a> {
                                         't' => '\t',
                                         '[' => '[',
                                         ']' => ']',
-                                        _ => log!(ERR format!("Invalid escape code: \\{}", chr)),
+                                        _ => log!(ERR format!("Invalid escape code: `\\{}`", chr)),
                                     });
                                 } else {
                                     log!(ERR "Unexpected end of string.")
@@ -345,7 +341,7 @@ impl<'a> Iterator for Lexer<'a> {
                                     } else {
                                         match peek!(2) {
                                             Some(chr) if !chr.is_digit(16) => {
-                                                log!(ERR format!("Unexpected character in hexnum: '{}'", chr))
+                                                log!(ERR format!("Unexpected character in hexnum: `{}`", chr))
                                             }
                                             None => log!(ERR "Unexpected end of hexnum."),
                                             Some(_) => (),
@@ -361,7 +357,7 @@ impl<'a> Iterator for Lexer<'a> {
                             ($chr:expr) => {{
                                 let chr = $chr as char;
                                 if has_exponent && !chr.is_digit(10) {
-                                    log!(ERR format!("Unexpected character in exponent: {}", chr));
+                                    log!(ERR format!("Unexpected character in exponent: `{}`", chr));
                                 }
                                 (is_hexadecimal && chr.is_digit(16)) ||
                                 (!is_hexadecimal && chr.is_digit(10))
@@ -409,11 +405,11 @@ impl<'a> Iterator for Lexer<'a> {
                         } else {
                             match buf.parse::<f64>() {
                                 Ok(num) => emit!(Token::Number(num)),
-                                Err(_) => log!(ERR format!("The number '{}' is malformed and doesn't parse.", buf)),
+                                Err(_) => log!(ERR format!("The number `{}` is malformed and doesn't parse.", buf)),
                             }
                         }
                     } else {
-                        log!(ERR format!("Unimplemented operator: '{}'", chr))
+                        log!(ERR format!("Unimplemented operator: `{}`", chr))
                     }
                 }
             };

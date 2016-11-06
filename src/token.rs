@@ -37,7 +37,7 @@ pub enum Token {
     Assignment,
     /// The `==` operator.
     Equal,
-    /// The `!=` operator.
+    /// The `~=` operator.
     NotEqual,
     /// The `<` operator.
     LessThan,
@@ -71,6 +71,7 @@ pub enum Token {
     CloseBracket,
 }
 
+/// Implements `From<&'a str>` for `Token`.
 impl<'a> From<&'a str> for Token {
     fn from(val: &'a str) -> Token {
         Token::Ident(val.to_string())
