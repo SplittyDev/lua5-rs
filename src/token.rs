@@ -1,3 +1,30 @@
+/// A keyword token.
+#[derive(Debug, PartialEq)]
+pub enum Keyword {
+    And,
+    Break,
+    Do,
+    Else,
+    ElseIf,
+    End,
+    False,
+    For,
+    Function,
+    Goto,
+    If,
+    In,
+    Local,
+    Nil,
+    Not,
+    Or,
+    Repeat,
+    Return,
+    Then,
+    True,
+    Until,
+    While,
+}
+
 /// A lexical token.
 #[derive(Debug, PartialEq)]
 pub enum Token {
@@ -5,6 +32,8 @@ pub enum Token {
     Number(f64),
     /// An identifier.
     Ident(String),
+    /// A keyword.
+    Keyword(Keyword),
     /// A string literal.
     StaticString(String),
     /// A comment.
@@ -75,5 +104,12 @@ pub enum Token {
 impl<'a> From<&'a str> for Token {
     fn from(val: &'a str) -> Token {
         Token::Ident(val.to_string())
+    }
+}
+
+/// Implements `From<Keyword>` for `Token`.
+impl From<Keyword> for Token {
+    fn from(val: Keyword) -> Token {
+        Token::Keyword(val)
     }
 }

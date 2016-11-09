@@ -14,7 +14,7 @@ pub mod parser;
 #[cfg(test)]
 mod tests {
     use lexer::{Lexer, Lexeme};
-    use token::Token;
+    use token::{Token, Keyword};
     use std::iter::Iterator;
     macro_rules! matchseq {
         ($lex:expr$(,$a:expr)*) => {{
@@ -132,7 +132,7 @@ mod tests {
                            = val return val end, __call  = function(t, k) return t[k] end }}) end");
         let mut lex = Lexer::new(&src);
         matchseq!(lex,
-                  "function",
+                  Keyword::Function,
                   "Memoize",
                   Token::OpenParen,
                   "fn",
@@ -140,15 +140,15 @@ mod tests {
                   "fn",
                   Token::Assignment,
                   "fn",
-                  "or",
-                  "function",
+                  Keyword::Or,
+                  Keyword::Function,
                   Token::OpenParen,
                   "x",
                   Token::CloseParen,
-                  "return",
-                  "nil",
-                  "end",
-                  "return",
+                  Keyword::Return,
+                  Keyword::Nil,
+                  Keyword::End,
+                  Keyword::Return,
                   "setmetatable",
                   Token::OpenParen,
                   Token::OpenBrace,
@@ -157,13 +157,13 @@ mod tests {
                   Token::OpenBrace,
                   "__index",
                   Token::Assignment,
-                  "function",
+                  Keyword::Function,
                   Token::OpenParen,
                   "t",
                   Token::Comma,
                   "k",
                   Token::CloseParen,
-                  "local",
+                  Keyword::Local,
                   "val",
                   Token::Assignment,
                   "fn",
@@ -176,26 +176,26 @@ mod tests {
                   Token::CloseBracket,
                   Token::Assignment,
                   "val",
-                  "return",
+                  Keyword::Return,
                   "val",
-                  "end",
+                  Keyword::End,
                   Token::Comma,
                   "__call",
                   Token::Assignment,
-                  "function",
+                  Keyword::Function,
                   Token::OpenParen,
                   "t",
                   Token::Comma,
                   "k",
                   Token::CloseParen,
-                  "return",
+                  Keyword::Return,
                   "t",
                   Token::OpenBracket,
                   "k",
                   Token::CloseBracket,
-                  "end",
+                  Keyword::End,
                   Token::CloseBrace,
                   Token::CloseParen,
-                  "end");
+                  Keyword::End);
     }
 }

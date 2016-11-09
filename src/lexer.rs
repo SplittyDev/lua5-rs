@@ -7,7 +7,7 @@
 use std::fmt;
 use std::str::Chars;
 use std::iter::Peekable;
-use token::Token;
+use token::{Token, Keyword};
 
 /// A lexical token with positional information.
 pub struct Lexeme(pub Token, pub TokenPosition);
@@ -313,7 +313,31 @@ impl<'a> Iterator for Lexer<'a> {
                                 }
                             }
                         }
-                        emit!(Token::Ident(buf))
+                        match buf.as_ref() {
+                            "and" => emit!(Token::Keyword(Keyword::And)),
+                            "break" => emit!(Token::Keyword(Keyword::Break)),
+                            "do" => emit!(Token::Keyword(Keyword::Do)),
+                            "else" => emit!(Token::Keyword(Keyword::Else)),
+                            "elseif" => emit!(Token::Keyword(Keyword::ElseIf)),
+                            "end" => emit!(Token::Keyword(Keyword::End)),
+                            "false" => emit!(Token::Keyword(Keyword::False)),
+                            "for" => emit!(Token::Keyword(Keyword::For)),
+                            "function" => emit!(Token::Keyword(Keyword::Function)),
+                            "goto" => emit!(Token::Keyword(Keyword::Goto)),
+                            "if" => emit!(Token::Keyword(Keyword::If)),
+                            "in" => emit!(Token::Keyword(Keyword::In)),
+                            "local" => emit!(Token::Keyword(Keyword::Local)),
+                            "nil" => emit!(Token::Keyword(Keyword::Nil)),
+                            "not" => emit!(Token::Keyword(Keyword::Not)),
+                            "or" => emit!(Token::Keyword(Keyword::Or)),
+                            "repeat" => emit!(Token::Keyword(Keyword::Repeat)),
+                            "return" => emit!(Token::Keyword(Keyword::Return)),
+                            "then" => emit!(Token::Keyword(Keyword::Then)),
+                            "true" => emit!(Token::Keyword(Keyword::True)),
+                            "until" => emit!(Token::Keyword(Keyword::Until)),
+                            "while" => emit!(Token::Keyword(Keyword::While)),
+                            _ => emit!(Token::Ident(buf)),
+                        }
                     } else if chr.is_digit(10) {
                         // The following is some EBNF I found online.
                         //
